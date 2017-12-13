@@ -1,9 +1,8 @@
 import cv2
-import imutils
 import numpy as np
 
 # simplify
-image = cv2.imread('square.jpg')
+image = cv2.imread('./assets/square.jpg')
 ratio = image.shape[0] / float(image.shape[0])
 
 reverse = 255 - image
