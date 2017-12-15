@@ -3,7 +3,7 @@ import math
 import time
 import numpy as np
 
-mmRatio = 0.2979406021
+mmRatio = 0.1479406021
 scale = 2
 
 windowsName = 'Window Name'
@@ -34,36 +34,29 @@ def playvideo():
     cv2.destroyAllWindows()
 
 def processFrame(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    blurred = cv2.GaussianBlur(gray, (25, 25), 0)
-
-    _, thresh = cv2.threshold(blurred, 220, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    _, cnts, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    liveFrame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+    liveFrame = cv2.medianBlur(liveFrame, 1)
+    liveFrame = cv2.GaussianBlur(liveFrame, (9, 9), 0)
+    liveFrame = cv2.Canny(liveFrame, 50, 100)
+    
+    _, liveFrame = cv2.threshold(liveFrame, 220, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, cnts, _ = cv2.findContours(liveFrame.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for c in cnts:
         # detect aproximinated contour
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.04 * peri, True)
-        cv2.drawContours(frame, [approx], 0, (0, 255, 0), 5)
-
+        
         if len(approx) == 4:
             # calculate area
             area = cv2.contourArea(approx)
+            cv2.drawContours(frame, [approx], 0, (0, 0, 255), 1)
 
-            print(area)
-            time.sleep(1)
+            if (area >= 1000):
+                cv2.drawContours(frame, [approx], 0, (255, 0, 0), 2)
+                difference = abs(round(cv2.norm(approx[0], approx[2]) - cv2.norm(approx[1], approx[3])))
 
-            if (area >= 10000):
-                # calculate angles
-                x1, y1 = approx[0][0]
-                x2, y2 = approx[3][0]
-                angle1 = abs(math.atan2(y2 - y1, x2 - x1) * 180 / math.pi)
-
-                x1, y1 = approx[3][0]
-                x2, y2 = approx[0][0]
-                angle2 = abs(math.atan2(y2 - y1, x2 - x1) * 180 / math.pi)
-
-                if ((angle1 >= 87 and angle1 <= 93) and (angle2 >= 87 and angle2 <= 93)):
+                if (difference < 30):
                     # use [c] insted [approx] for precise detection line
                     # c = c.astype("float")
                     # c *= ratio
@@ -78,8 +71,8 @@ def processFrame(frame):
                     # draw detected data 
                     M = cv2.moments(c)
                     if (M["m00"] != 0):
-                        cX = int((M["m10"] / M["m00"]) * ratio)
-                        cY = int((M["m01"] / M["m00"]) * ratio)
+                        cX = int((M["m10"] / M["m00"]))
+                        cY = int((M["m01"] / M["m00"]))
 
                         # a square will have an aspect ratio that is approximately
                         # equal to one, otherwise, the shape is a rectangle
@@ -91,15 +84,15 @@ def processFrame(frame):
                         width = w * mmRatio
                         height = h * mmRatio
 
-                        messurment = '%0.2fmm * %0.2fmm' % (width, height)
+                        messurment = '%0.2fmm * %0.2fmm | %s' % (width, height, difference)
 
                         # draw text
-                        cv2.putText(frame, messurment, (approx[0][0][0], approx[0][0][1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
+                        cv2.putText(frame, messurment, (approx[0][0][0], approx[0][0][1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
 
 
-    blurred = cv2.cvtColor(blurred, cv2.COLOR_GRAY2BGR)
-    combined = np.vstack((blurred, frame))
+    liveFrame = cv2.cvtColor(liveFrame, cv2.COLOR_GRAY2BGR)
+    combined = np.vstack((liveFrame, frame))
 
     height, width = combined.shape[:2]
     return cv2.resize(combined, (int(width/scale), int(height/scale)))
