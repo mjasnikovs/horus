@@ -35,7 +35,7 @@ def sendBarcode(barcode):
 #video loop
 def playvideo():
     global sendFlag
-    vid = cv2.VideoCapture(0)
+    vid = cv2.VideoCapture(1)
     # vid.set(cv2.CAP_PROP_FRAME_WIDTH, frameWidth)
     # vid.set(cv2.CAP_PROP_FRAME_HEIGHT, frameHeight)
 
