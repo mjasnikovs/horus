@@ -63,8 +63,7 @@ TARGET_LIST = [
     LEFT
 ]
 
-# 'L', 'A', 'G', 'S'
-FRAM_CODEC = cv.VideoWriter_fourcc('L', 'A', 'G', 'S')
+FRAM_CODEC = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
 if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
