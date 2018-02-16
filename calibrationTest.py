@@ -81,13 +81,10 @@ def playVideo():
 
     # vid.set(cv2.CAP_PROP_SETTINGS, 1)
     vid.set(cv.CAP_PROP_FOURCC, FRAM_CODEC)
-    vid.set(cv.CAP_PROP_FPS, 30)
+    vid.set(cv.CAP_PROP_FPS, 5)
 
     cv.namedWindow(WINDOWS_NAME)
     cv.startWindowThread()
-
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER,
-                DIMENSION, 0.001)
 
     while(True):
         ret, frame = vid.read()
@@ -110,15 +107,6 @@ def playVideo():
                                                 cam_matrix,
                                                 (w, h),
                                                 5)
-
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        ret, corners = cv.findChessboardCorners(gray,
-                                                (NUM_COLS, NUM_ROWS), None)
-
-        corners2 = cv.cornerSubPix(gray,
-                           corners, (11, 11), (-1, -1), criteria)
-
-        cv.drawChessboardCorners(img, (NUM_COLS, NUM_ROWS), corners2, ret)
 
         frame = cv.remap(frame, mapx, mapy, cv.INTER_LINEAR)
 
