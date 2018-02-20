@@ -1,5 +1,31 @@
 import cv2 as cv
+import numpy as np
+
 from threading import Timer, Thread
+from scipy.stats import itemfreq
+
+
+class RGB_INIT():
+    def __init__(self):
+        self.Black = (0, 0, 0)
+        self.White = (255, 255, 255)
+        self.Red = (0, 0, 255)
+        self.Lime = (0, 255, 0)
+        self.Blue = (255, 0, 0)
+        self.Yellow = (0, 255, 255)
+        self.Cyan = (255, 255, 0)
+        self.Magenta = (255, 0, 255)
+        self.Silver = (192, 192, 192)
+        self.Gray = (128, 128, 128)
+        self.Maroon = (0, 0, 128)
+        self.Olive = (0, 128, 128)
+        self.Green = (0, 128, 0)
+        self.Purple = (128, 0, 128)
+        self.Teal = (128, 128, 0)
+        self.Navy = (128, 0, 0)
+
+
+RGB = RGB_INIT()
 
 
 class setInterval():
@@ -162,24 +188,108 @@ def downScaleImage(image, scale):
     return cv.resize(image, (int(width / scale), int(height / scale)))
 
 
-class RGB_INIT():
-    def __init__(self):
-        self.Black = (0, 0, 0)
-        self.White = (255, 255, 255)
-        self.Red = (0, 0, 255)
-        self.Lime = (0, 255, 0)
-        self.Blue = (255, 0, 0)
-        self.Yellow = (0, 255, 255)
-        self.Cyan = (255, 255, 0)
-        self.Magenta = (255, 0, 255)
-        self.Silver = (192, 192, 192)
-        self.Gray = (128, 128, 128)
-        self.Maroon = (0, 0, 128)
-        self.Olive = (0, 128, 128)
-        self.Green = (0, 128, 0)
-        self.Purple = (128, 0, 128)
-        self.Teal = (128, 128, 0)
-        self.Navy = (128, 0, 0)
+def scanColorRange(image, x=0, y=0,
+                   matX=2, matY=2, matD=10,
+                   draw=False):
+    ''' Return lower and upper color range from pixel matrix coordinates
+
+        Attributes:
+            image   Image
+            x       axis for start position
+            y       axis for start position
+            matX    point column amount
+            matY    point row amount
+            matD    point distance between eachother
+            draw    draw point to image frame
+    '''
+    posY = int(y - matY / 2 * matD)
+    posX = int(x - matX / 2 * matD)
+    rangeList = np.array([], dtype=np.uint8).reshape(0, 3)
+
+    if draw is True:
+        frame = image.copy()
+    else:
+        frame = None
+
+    for Y in range(0, matY):
+        for X in range(0, matX):
+            locX = int(posX + X * matD)
+            locY = int(posY + Y * matD)
+            rangeList = np.vstack([rangeList, image[locY, locX]])
+            if draw is True:
+                cv.circle(frame,
+                          (locX, locY),
+                          int(matD / 3), RGB.Cyan, -1)
+
+    rangeList = np.sort(rangeList, axis=0)
+
+    lowRange = rangeList[0]
+    uppRange = rangeList[len(rangeList) - 1]
+
+    return frame, lowRange, uppRange
 
 
-RGB = RGB_INIT()
+def scanColorRangeMedian(image, x=0, y=0,
+                         matX=2, matY=2, matD=10,
+                         draw=False):
+    ''' Return median color range from pixel matrix coordinates
+
+        Attributes:
+            image   Image
+            x       axis for start position
+            y       axis for start position
+            matX    point column amount
+            matY    point row amount
+            matD    point distance between eachother
+            draw    draw point to image frame
+    '''
+    posY = int(y - matY / 2 * matD)
+    posX = int(x - matX / 2 * matD)
+    rangeList = np.array([], dtype=np.uint8).reshape(0, 3)
+
+    if draw is True:
+        frame = image.copy()
+    else:
+        frame = None
+
+    for Y in range(0, matY):
+        for X in range(0, matX):
+            locY = int(posY + Y * matD)
+            locX = int(posX + X * matD)
+            rangeList = np.vstack([rangeList, image[locY, locX]])
+            if draw is True:
+                cv.circle(frame,
+                          (locX, locY),
+                          int(matD / 3), RGB.Cyan, -1)
+
+    return frame, np.median(rangeList, axis=0)
+
+
+def scanColorDominant(image, x=0, y=0, w=2, h=2, draw=True):
+    ''' Return dominant color from pixel matrix coordinates
+
+        Attributes:
+            image   Image
+            x       x axis for start position
+            y       y axis for start position
+            w       width
+            h       height
+            draw    draw rectangle to image frame
+    '''
+    frame = image[y:y + h, x:x + w]
+
+    arr = np.float32(frame)
+    pixels = arr.reshape((-1, 3))
+
+    crit = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 200, .1)
+    _, labels, centroids = cv.kmeans(pixels, int(w + h / 2), None,
+                                     crit, 10, cv.KMEANS_RANDOM_CENTERS)
+
+    palette = np.uint8(centroids)
+    color = palette[np.argmax(itemfreq(labels)[:, -1])]
+
+    if draw is True:
+        image = cv.rectangle(image.copy(), (x, y), (x + w, y + h), RGB.Red, -1)
+        return image, color
+
+    return None, color
