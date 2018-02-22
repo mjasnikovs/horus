@@ -59,5 +59,5 @@ while True:
         if k == 27:
             break
 
-cv.destroyAllWindows()
 stream.stop()
+cv.destroyAllWindows()

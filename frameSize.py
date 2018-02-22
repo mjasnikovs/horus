@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 
 from statistics import median
-from helper import webcamStream, downScaleImage, scanColorRange, scanColorRangeMedian, scanColorDominant, RGB
+from helper import webcamStream, downScaleImage, scanColorRange, scanColorRangeMedian, scanColorDominant, drawFrameSize, RGB
 from imutils import contours, perspective
 from scipy.spatial import distance
 from operator import itemgetter
@@ -30,11 +30,12 @@ NAME_ARGS = 'camera' if (args.name is None) else args.name
 
 # config
 frameCroopY = [650, 1250]
+hsvC = 30
 
 # width
-pixelsPerMetricX = 3.849631579
+pixMetricX = 1.618666186
 # length
-pixelsPerMetricY = 3.913043478
+pixMetricY = 1.603797039
 
 
 def midpoint(ptA, ptB):
@@ -48,7 +49,7 @@ def processFrame(frame):
     height, width = frame.shape[:2]
     centerY, centerX = (int(height / 2), int(width / 2))
 
-    # frame = cv.bilateralFilter(frame, 10, 60, cv.BORDER_WRAP)
+    frame = cv.bilateralFilter(frame, 10, 30, cv.BORDER_WRAP)
     hsvFrame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
     tRange, lowRange, uppRange = scanColorRange(hsvFrame,
@@ -57,7 +58,7 @@ def processFrame(frame):
 
     tMedian, medianRange = scanColorRangeMedian(hsvFrame,
                                                 centerX, centerY,
-                                                matX=100, matY=10,
+                                                matX=200, matY=15,
                                                 draw=True)
 
     tFrame, dominant = scanColorDominant(hsvFrame,
@@ -65,20 +66,27 @@ def processFrame(frame):
                                          200, 40,
                                          draw=True)
 
-    fRange = cv.inRange(hsvFrame, lowRange - 25, uppRange + 25)
-    fMedian = cv.inRange(hsvFrame, medianRange - 25, medianRange + 25)
-    fFrame = cv.inRange(hsvFrame, dominant - 25, dominant + 25)
+    fRange = cv.inRange(hsvFrame, lowRange - hsvC, uppRange + hsvC)
+    fMedian = cv.inRange(hsvFrame, medianRange - hsvC, medianRange + hsvC)
+    fFrame = cv.inRange(hsvFrame, dominant - hsvC, dominant + hsvC)
 
+    dRange = drawFrameSize(fRange, frame, pixMetricX=pixMetricX, pixMetricY=pixMetricY)
     fRange = cv.cvtColor(fRange, cv.COLOR_GRAY2BGR)
     tRange = cv.cvtColor(tRange, cv.COLOR_HSV2BGR)
 
+    dMedian = drawFrameSize(fMedian, frame, pixMetricX=pixMetricX, pixMetricY=pixMetricY)
     fMedian = cv.cvtColor(fMedian, cv.COLOR_GRAY2BGR)
     tMedian = cv.cvtColor(tMedian, cv.COLOR_HSV2BGR)
 
+    dFrame = drawFrameSize(fFrame, frame, pixMetricX=pixMetricX, pixMetricY=pixMetricY)
     fFrame = cv.cvtColor(fFrame, cv.COLOR_GRAY2BGR)
     tFrame = cv.cvtColor(tFrame, cv.COLOR_HSV2BGR)
 
-    return np.vstack((fRange, tRange, fMedian, tMedian, fFrame, tFrame))
+    return np.vstack((
+        np.hstack((fRange, tRange, dRange,)),
+        np.hstack((fMedian, tMedian, dMedian)),
+        np.hstack((fFrame, tFrame, dFrame))
+    ))
 
 
 MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt', delimiter=',')
@@ -111,5 +119,5 @@ while True:
         if k == 27:
             break
 
-cv.destroyAllWindows()
 stream.stop()
+cv.destroyAllWindows()
