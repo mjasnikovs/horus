@@ -1,8 +1,11 @@
 import cv2 as cv
 import numpy as np
-from helper import webcamStream, downScaleImage, scanColorRangeMedian, RGB, midpoint
 import argparse
-from imutils import contours, perspective
+
+from helper import webcamStream, downScaleImage, scanColorRangeMedian, RGB
+from helper import midpoint
+
+from imutils import perspective
 from scipy.spatial import distance
 from statistics import median
 
@@ -24,17 +27,20 @@ SCALE_ARGS = 1 if (args.downscale is None) else args.downscale
 WIDTH_ARGS = 4096 if (args.width is None) else args.width
 HEIGHT_ARGS = 2160 if (args.height is None) else args.height
 FPS_ARGS = 5 if (args.fps is None) else args.fps
-NAME_ARGS = 'camera' if (args.name is None) else args.name
-
-MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt', delimiter=',')
-DISTORTION = np.loadtxt('calibrations/' + NAME_ARGS + '_distortion.txt',
-                        delimiter=',')
+NAME_ARGS = None if (args.name is None) else args.name
 
 stream = webcamStream(1, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
-stream.calibrateCamera(MATRIX, DISTORTION)
+
+if NAME_ARGS is not None:
+    MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt',
+                        delimiter=',')
+    DISTORTION = np.loadtxt('calibrations/' + NAME_ARGS + '_distortion.txt',
+                            delimiter=',')
+    stream.calibrateCamera(MATRIX, DISTORTION)
 
 widthPixArray = list()
 lengthPixArray = list()
+
 
 def rectangleSize(mask, frame):
     global widthPixArray
@@ -78,7 +84,8 @@ def rectangleSize(mask, frame):
                            cv.FONT_HERSHEY_SIMPLEX,
                            1, RGB.Black, 2)
 
-                cv.putText(frame, '{:4d}.00 mm'.format(round(widthPix / (333.66 / 210))),
+                msg = '{:4d}.00 mm'.format(round(widthPix / (333.66 / 210)))
+                cv.putText(frame, msg,
                            (int(topWx), int(topWy)),
                            cv.FONT_HERSHEY_SIMPLEX,
                            1.5, RGB.Lime, 2)
@@ -94,12 +101,14 @@ def rectangleSize(mask, frame):
                 lengthPix = distance.euclidean((topLx, topLy), (botLx, botLy))
                 lengthPixArray.append(lengthPix)
 
-                cv.putText(frame, 'Lpix: {:.5f}'.format(median(lengthPixArray)),
+                msg = 'Lpix: {:.5f}'.format(median(lengthPixArray))
+                cv.putText(frame, msg,
                            (10, 60),
                            cv.FONT_HERSHEY_SIMPLEX,
                            1, RGB.Black, 2)
 
-                cv.putText(frame, '{:4d}.00 mm'.format(round(lengthPix / (333.66 / 210))),
+                msg = '{:4d}.00 mm'.format(round(lengthPix / (333.66 / 210)))
+                cv.putText(frame, msg,
                            (int(topLx), int(topLy)),
                            cv.FONT_HERSHEY_SIMPLEX,
                            1.5, RGB.Lime, 2)
@@ -111,6 +120,9 @@ cv.namedWindow(WINDOWS_NAME)
 cv.startWindowThread()
 
 while True:
+    if stream.die is True:
+        break
+
     frame = stream.readClean()
 
     if frame is not None:
