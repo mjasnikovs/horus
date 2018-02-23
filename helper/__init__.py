@@ -110,6 +110,7 @@ class webcamStream():
         self.calibrate = False
         self.FPS_COUNTER = 0
         self.FPS_VALUE = 0
+        self.fpsInterval = None
 
     def start(self):
         Thread(target=self.update, args=()).start()
@@ -131,7 +132,7 @@ class webcamStream():
             self.FPS_COUNTER += 1
 
             if not self.grabbed:
-                self.die()
+                self.stop()
 
     def read(self):
         return self.frame
@@ -147,7 +148,8 @@ class webcamStream():
     def stop(self):
         self.die = True
         self.frame = None
-        self.fpsInterval.stop()
+        if self.fpsInterval:
+            self.fpsInterval.stop()
         self.stream.release()
 
     def fpsCounter(self):

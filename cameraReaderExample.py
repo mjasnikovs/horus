@@ -34,17 +34,20 @@ cv.namedWindow(WINDOWS_NAME)
 cv.startWindowThread()
 
 while True:
+    if stream.die is True:
+        break
+
     frame = stream.readClean()
 
     if frame is not None:
-        frame = cv.UMat(frame)
+        # frame = cv.UMat(frame)
 
-        frame = cv.cvtColor(frame, cv.COLOR_RGB2GRAY)
-        frame = cv.GaussianBlur(frame, (1, 1), 0)
-        frame = cv.bilateralFilter(frame, 9, 75, 75)
-        frame = cv.Canny(frame, 0, 255)
+        # frame = cv.cvtColor(frame, cv.COLOR_RGB2GRAY)
+        # frame = cv.GaussianBlur(frame, (1, 1), 0)
+        # frame = cv.bilateralFilter(frame, 9, 75, 75)
+        # frame = cv.Canny(frame, 0, 255)
 
-        frame = cv.cvtColor(cv.UMat(frame).get(), cv.COLOR_GRAY2BGR)
+        # frame = cv.cvtColor(cv.UMat(frame).get(), cv.COLOR_GRAY2BGR)
 
         if (SCALE_ARGS > 1):
             frame = downScaleImage(frame, SCALE_ARGS)
