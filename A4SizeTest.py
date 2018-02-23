@@ -44,6 +44,8 @@ lengthPixArray = list()
 
 def rectangleSize(mask, frame):
     global widthPixArray
+    global lengthPixArray
+
     frame = frame.copy()
 
     _, cnts, hier = cv.findContours(
