@@ -63,6 +63,16 @@ widthPixArray = list()
 lengthPixArray = list()
 
 
+def openClProcess(frame):
+    frame = cv.UMat(frame)
+    # frame = cv.bilateralFilter(frame, 10, 255, cv.BORDER_WRAP)
+    frame = cv.bilateralFilter(frame, 25, 40, 150, borderType=cv.BORDER_WRAP)
+    # frame = cv.Canny(frame, 65, 130)
+    # frame = cv.dilate(frame, None, iterations=2)
+    # frame = cv.erode(frame, None, iterations=2)
+    return cv.UMat.get(frame)
+
+
 def rectangleSize(mask, frame):
     global widthPixArray
     global lengthPixArray
@@ -96,14 +106,12 @@ def rectangleSize(mask, frame):
         cv.circle(frame, tuple(br), 5, RGB.Lime, -1)
         cv.circle(frame, tuple(bl), 5, RGB.Lime, -1)
 
-        # extract top and bottom coordinates of interest
-        boX1, boY1 = tl
-        boX2, boY2 = br
+        # extract top and bottom coordinates of bounding area
+        x, y, w, h = cv.boundingRect(c)
 
         # > Create canvas and rotate to proper angle
-
         # crop area of interest
-        lenghtPiece = mask[int(boY1):int(boY2), int(boX1):int(boX2)]
+        lenghtPiece = mask[int(y):int(y + h), int(x):int(x + w)]
         height, width = lenghtPiece.shape[:2]
 
         # create blank canvas image, with bigger size
@@ -116,6 +124,8 @@ def rectangleSize(mask, frame):
         # rotate image to 90 degrees, if required
         if (angle > 0 or angle < 0):
             center = (cw / 2, ch / 2)
+            if (abs(angle) > 45):
+                angle += 90
             rot = cv.getRotationMatrix2D(center, angle, 1)
             blankCanvas = cv.warpAffine(blankCanvas, rot, (cw, ch))
 
@@ -129,14 +139,28 @@ def rectangleSize(mask, frame):
         widthPixArray.append(widthPix)
 
         # > Lenght mesurment
-        # extract 25 rows from bottom
-        crop = blankCanvas[ch - 100:ch - 80, 0:cw]
+        # Crop by width measurment, 20 px of bottom
+        topY = int((ch - widthPix) / 2)
+        botY = int((ch - widthPix) / 2 + widthPix)
+        crop = blankCanvas[topY:botY, 0:cw]
+
+        ch, cw = crop.shape[:2]
+        cropTop = crop[5:10, 0:cw]
+        cropBot = crop[ch - 10:ch, 0:cw]
+
+        if (len(cropTop) and len(cropBot)):
+            lengthPixTop = np.amax(np.sum(cropTop == 255, axis=1))
+            lengthPixBot = np.amax(np.sum(cropBot == 255, axis=1))
+        else:
+            lengthPixTop = 0
+            lengthPixBot = 0
+
         # count white pixels and get largest value
-        lengthPix = np.amax(np.sum(crop == 255, axis=1))
+        lengthPix = (lengthPixTop + lengthPixBot) / 2
         lengthPixArray.append(lengthPix)
 
-    width = widthPix / 1.542372881
-    length = lengthPix / 1.598459316
+    width = widthPix / 1.576271186
+    length = lengthPix / 1.632161772
 
     if (len(lengthPixArray) and len(widthPixArray)):
         print(median(widthPixArray), median(lengthPixArray))
@@ -165,8 +189,7 @@ while True:
         height, width = frame.shape[:2]
         centerY, centerX = (int(height / 2), int(width / 2))
 
-        # frame = cv.fastNlMeansDenoisingColored(frame, None, 6, 6, 7, 21)
-        # frame = cv.UMat.get(cv.bilateralFilter(cv.UMat(frame), 10, 50, cv.BORDER_WRAP))
+        frame = openClProcess(frame)
         hsvF = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
         hFrame, medianRange = scanColorRangeMedian(
@@ -176,7 +199,7 @@ while True:
             draw=True
         )
 
-        hMask = cv.inRange(hsvF, medianRange - 35, medianRange + 35)
+        hMask = cv.inRange(hsvF, medianRange - 40, medianRange + 40)
 
         target = rectangleSize(hMask, frame)
 
