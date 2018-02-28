@@ -58,6 +58,7 @@ if NAME_ARGS is not None:
     DISTORTION = np.loadtxt('calibrations/' + NAME_ARGS + '_distortion.txt',
                             delimiter=',')
     stream.calibrateCamera(MATRIX, DISTORTION)
+    stream.stream.set(cv.CAP_PROP_EXPOSURE, -3)
 
 widthPixArray = list()
 lengthPixArray = list()
@@ -66,10 +67,10 @@ lengthPixArray = list()
 def openClProcess(frame):
     frame = cv.UMat(frame)
     # frame = cv.bilateralFilter(frame, 10, 255, cv.BORDER_WRAP)
-    frame = cv.bilateralFilter(frame, 25, 40, 150, borderType=cv.BORDER_WRAP)
+    frame = cv.bilateralFilter(frame, 25, 10, 255, borderType=cv.BORDER_WRAP)
     # frame = cv.Canny(frame, 65, 130)
-    # frame = cv.dilate(frame, None, iterations=2)
-    # frame = cv.erode(frame, None, iterations=2)
+    frame = cv.dilate(frame, None, iterations=2)
+    frame = cv.erode(frame, None, iterations=2)
     return cv.UMat.get(frame)
 
 
@@ -143,10 +144,12 @@ def rectangleSize(mask, frame):
         topY = int((ch - widthPix) / 2)
         botY = int((ch - widthPix) / 2 + widthPix)
         crop = blankCanvas[topY:botY, 0:cw]
-
+        cv.imshow('croop', crop)
         ch, cw = crop.shape[:2]
         cropTop = crop[5:10, 0:cw]
         cropBot = crop[ch - 10:ch, 0:cw]
+
+        # cv.imshow('hello', np.vstack((cropTop, cropBot)))
 
         if (len(cropTop) and len(cropBot)):
             lengthPixTop = np.amax(np.sum(cropTop == 255, axis=1))
@@ -159,8 +162,8 @@ def rectangleSize(mask, frame):
         lengthPix = (lengthPixTop + lengthPixBot) / 2
         lengthPixArray.append(lengthPix)
 
-    width = widthPix / 1.576271186
-    length = lengthPix / 1.632161772
+    width = widthPix / 1.686440678
+    length = lengthPix / 1.659725566
 
     if (len(lengthPixArray) and len(widthPixArray)):
         print(median(widthPixArray), median(lengthPixArray))
@@ -195,11 +198,11 @@ while True:
         hFrame, medianRange = scanColorRangeMedian(
             hsvF,
             centerX, centerY,
-            matX=100, matY=4,
+            matX=100, matY=2,
             draw=True
         )
 
-        hMask = cv.inRange(hsvF, medianRange - 40, medianRange + 40)
+        hMask = cv.inRange(hsvF, medianRange - 45, medianRange + 45)
 
         target = rectangleSize(hMask, frame)
 

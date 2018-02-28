@@ -305,8 +305,76 @@ def scanColorDominant(image, x=0, y=0, w=2, h=2, draw=True):
     return None, color
 
 
+def createMask(image, x=None, y=None, w=None, h=None, tolerance=15, draw=None):
+    ''' Return mask image from defined by area of intrest HSV value
+
+        Attributes:
+            image       Image
+            x           x axis for start position
+            y           y axis for start position
+            w           width
+            h           height
+            tolerance   +/- HSV value tolerance
+            draw        draw target rectangle to image mask
+    '''
+    mask = image.copy()
+    height, width = mask.shape[:2]
+
+    x = x if x is not None else int(width / 2)
+    y = y if y is not None else int(height / 2)
+    w = w if w is not None else int(width * .1)
+    h = h if h is not None else int(height * .1)
+
+    mask = cv.cvtColor(mask, cv.COLOR_BGR2HSV)
+    mask = cv.bilateralFilter(mask, 10, 10, 255, borderType=cv.BORDER_WRAP)
+    mask = mask[:, :, 2]
+
+    # crop area of interest and median HSV value key
+    crop = mask[y:y + w, x:x + w]
+    medVal = int(np.median(crop))
+
+    # color threshold
+    _, mask = cv.threshold(
+        mask,
+        medVal - tolerance,
+        medVal + tolerance,
+        cv.THRESH_BINARY
+    )
+
+    # draw HSV capture area
+    if draw is True:
+        cv.rectangle(image, (x, y), (x + w, y + h), RGB.Lime, 2)
+
+    return image, mask
+
+
 def midpoint(ptA, ptB):
     return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
+
+
+def contourPixels(frame):
+    _, cnts, hier = cv.findContours(
+        frame.copy(),
+        cv.RETR_EXTERNAL,
+        cv.CHAIN_APPROX_SIMPLE
+    )
+
+    if len(cnts) == 0:
+        return (None, None, None)
+
+    rect = cv.minAreaRect(cnts[0])
+    box = cv.boxPoints(rect)
+    tl, tr, br, bl = perspective.order_points(box)
+
+    top = midpoint(tl, tr)
+    bottom = midpoint(bl, br)
+    left = midpoint(tl, bl)
+    right = midpoint(tr, br)
+
+    height = distance.euclidean(top, bottom)
+    width = distance.euclidean(left, right)
+
+    return width, height, (top, right, bottom, left)
 
 
 def drawFrameSize(mask, frame, minArea=100000, pixMetricX=1, pixMetricY=1):
