@@ -212,7 +212,7 @@ def captureImages():
             break
 
         if IMWRITE is True:
-            time.sleep(0.5)
+            time.sleep(1)
 
     cv.destroyAllWindows()
 

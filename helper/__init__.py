@@ -90,7 +90,7 @@ class webcamStream():
         self.stream.set(cv.CAP_PROP_SHARPNESS, 0)
         self.stream.set(cv.CAP_PROP_GAIN, 0)
         self.stream.set(cv.CAP_PROP_ZOOM, 0)
-        self.stream.set(cv.CAP_PROP_EXPOSURE, -5)
+        self.stream.set(cv.CAP_PROP_EXPOSURE, -7)
 
         self.stream.set(cv.CAP_PROP_CONVERT_RGB, 1)
         self.stream.set(cv.CAP_PROP_AUTO_EXPOSURE, 0)

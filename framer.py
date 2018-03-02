@@ -33,7 +33,7 @@ if NAME_ARGS is not None:
     DISTORTION = np.loadtxt('calibrations/' + NAME_ARGS + '_distortion.txt',
                             delimiter=',')
     stream.calibrateCamera(MATRIX, DISTORTION)
-    stream.stream.set(cv.CAP_PROP_EXPOSURE, -5)
+    stream.stream.set(cv.CAP_PROP_EXPOSURE, -7)
 
 widthPixArray = list()
 lengthPixArray = list()
@@ -52,17 +52,18 @@ while True:
     if frame is not None:
         # crop, to area of interest
         height, width = frame.shape[:2]
-        frame = frame[400:1300, 0:width]
+        # cv.line(frame, (0, int(height / 2)), (width, int(height / 2)), RGB.Red, 2)
+        frame = frame[300:1200, 0:width]
         height, width = frame.shape[:2]
         center = (width / 2, height / 2)
 
         frame, mask = createMask(
             frame,
-            x=int(width / 2 - 400),
-            y=int(height - 100),
+            x=int(width / 2 - 350),
+            y=int(height - 150),
             w=800,
             h=50,
-            tolerance=40,
+            tolerance=30,
             draw=True
         )
 
@@ -126,11 +127,10 @@ while True:
                     cv.FONT_HERSHEY_SIMPLEX,
                     2, RGB.Red, 2
                 )
-
                 # draw cm
                 msg = '{:.1f} mm x {:.1f} mm'.format(
-                    heightPix / 1.705263158,
-                    widthPix / 1.683196919
+                    heightPix / 1.683760684,
+                    widthPix / 1.663456909
                 )
                 cv.putText(
                     frame,
