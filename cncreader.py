@@ -77,6 +77,7 @@ CSV_KEYS = [
 ]
 
 stream = webcamStream(0, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
+stream.stream.set(cv.CAP_PROP_EXPOSURE, -7)
 
 if NAME_ARGS is not None:
     MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt',
@@ -129,20 +130,34 @@ def wrightCSV(barcode):
     SEND_FLAG = True
     t = Timer(5, resetSendFlag)
     t.start()
+    print('BARCODE:', barcode)
 
-    if barcode not in CSV_LIST:
-        ERR_MESSAGE = 'Barcode not found in CSV files'
+    if barcode == 'EOF' and PARAM_BUFFER is None:
+        ERR_MESSAGE = 'Param buffer empty, can\'t EOF.'
         return
+    elif barcode != 'EOF':
+        if barcode not in CSV_LIST:
+            ERR_MESSAGE = 'Barcode not found in CSV files.'
+            return
 
-    if PARAM_BUFFER is None:
-        for key in CSV_LIST[barcode]:
-            PARAM_BUFFER = key + '9="' + CSV_LIST[barcode][key] + '" '
+        if PARAM_BUFFER is None:
+            PARAM_BUFFER = ''
+            for key in CSV_LIST[barcode]:
+                if key is 'OO' or key is 'J':
+                    PARAM_BUFFER += key + '9="' + CSV_LIST[barcode][key] + '" '
+                else:
+                    PARAM_BUFFER += key + '9=' + CSV_LIST[barcode][key] + ' '
             SUCCES_MESSAGE = barcode
             return
-    else:
-        for key in CSV_LIST[barcode]:
-            PARAM_BUFFER += key + '5="' + CSV_LIST[barcode][key] + '" '
+        else:
+            for key in CSV_LIST[barcode]:
+                if key is 'OO' or key is 'J':
+                    PARAM_BUFFER += key + '5="' + CSV_LIST[barcode][key] + '" '
+                else:
+                    PARAM_BUFFER += key + '5=' + CSV_LIST[barcode][key] + ' '
             SUCCES_MESSAGE = barcode
+    else:
+        SUCCES_MESSAGE = 'SENT'
 
     if Port.is_open is False:
         Port.open()
@@ -194,11 +209,12 @@ while True:
 
             code = str(decode(gray))
             m = re.search('\d{7}\w{2}', code)
+            eof = re.search('EOF', code)
 
-            if m:
-                barcode = m.group()
-                print(barcode)
-                wrightCSV(barcode)
+            if eof:
+                wrightCSV(eof.group())
+            elif m:
+                wrightCSV(m.group())
 
         if (SCALE_ARGS > 1):
             frame = downScaleImage(frame, SCALE_ARGS)

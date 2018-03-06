@@ -121,7 +121,7 @@ def wrightCSV(barcode):
 
 
 loadCSV()
-wrightCSV('1001450LH')
+wrightCSV('1002139LS')
 wrightCSV('1001450LS')
 
 print('ERR_MESSAGE', ERR_MESSAGE)
