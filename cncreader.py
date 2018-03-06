@@ -27,9 +27,9 @@ args = parser.parse_args()
 
 WINDOWS_NAME = 'CNC BARCODE READER'
 SCALE_ARGS = 1 if (args.downscale is None) else args.downscale
-WIDTH_ARGS = 1280 if (args.width is None) else args.width
-HEIGHT_ARGS = 720 if (args.height is None) else args.height
-FPS_ARGS = 10 if (args.fps is None) else args.fps
+WIDTH_ARGS = 680 if (args.width is None) else args.width
+HEIGHT_ARGS = 460 if (args.height is None) else args.height
+FPS_ARGS = 30 if (args.fps is None) else args.fps
 NAME_ARGS = None if (args.name is None) else args.name
 
 SEND_FLAG = False
@@ -76,8 +76,10 @@ CSV_KEYS = [
     None
 ]
 
-stream = webcamStream(0, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
+stream = webcamStream(1, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
 stream.stream.set(cv.CAP_PROP_EXPOSURE, -7)
+stream.stream.set(cv.CAP_PROP_ZOOM, 255)
+stream.stream.set(cv.CAP_PROP_SHARPNESS, 255)
 
 if NAME_ARGS is not None:
     MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt',
@@ -186,6 +188,7 @@ while True:
     frame = stream.readClean()
 
     if frame is not None:
+        frame = cv.flip(frame, 1)
         height, width = frame.shape[:2]
         if SEND_FLAG is True:
             frame = np.zeros([height, width, 3], dtype=np.uint8)
@@ -196,16 +199,16 @@ while True:
                     frame, str(ERR_MESSAGE),
                     (50, int(height / 2)),
                     cv.FONT_HERSHEY_SIMPLEX,
-                    2, RGB.Red, 4)
+                    1, RGB.Red, 2)
             elif SUCCES_MESSAGE is not None:
                 cv.putText(
                     frame, str(SUCCES_MESSAGE),
                     (50, int(height / 2)),
                     cv.FONT_HERSHEY_SIMPLEX,
-                    2, RGB.Lime, 4)
+                    2, RGB.Lime, 2)
         else:
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            gray = cv.erode(gray, None, iterations=2)
+            gray = cv.erode(gray, None, iterations=1)
 
             code = str(decode(gray))
             m = re.search('\d{7}\w{2}', code)
