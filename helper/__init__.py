@@ -101,7 +101,7 @@ class webcamStream():
         self.stream.set(cv.CAP_PROP_FRAME_WIDTH, width)
         self.stream.set(cv.CAP_PROP_FRAME_HEIGHT, height)
 
-        # vid.set(cv2.CAP_PROP_SETTINGS, 1)
+        # self.stream.set(cv.CAP_PROP_SETTINGS, 1)
         self.stream.set(cv.CAP_PROP_FOURCC, FRAM_CODEC)
         self.stream.set(cv.CAP_PROP_FPS, fps)
 

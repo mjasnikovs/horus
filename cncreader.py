@@ -29,7 +29,7 @@ WINDOWS_NAME = 'CNC BARCODE READER'
 SCALE_ARGS = 1 if (args.downscale is None) else args.downscale
 WIDTH_ARGS = 680 if (args.width is None) else args.width
 HEIGHT_ARGS = 460 if (args.height is None) else args.height
-FPS_ARGS = 30 if (args.fps is None) else args.fps
+FPS_ARGS = 10 if (args.fps is None) else args.fps
 NAME_ARGS = None if (args.name is None) else args.name
 
 SEND_FLAG = False
@@ -76,10 +76,12 @@ CSV_KEYS = [
     None
 ]
 
-stream = webcamStream(1, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
-stream.stream.set(cv.CAP_PROP_EXPOSURE, -7)
-stream.stream.set(cv.CAP_PROP_ZOOM, 255)
-stream.stream.set(cv.CAP_PROP_SHARPNESS, 255)
+stream = webcamStream(2, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
+# stream.stream.set(cv.CAP_PROP_SETTINGS, 1)
+stream.stream.set(cv.CAP_PROP_EXPOSURE, -5.0)
+stream.stream.set(cv.CAP_PROP_GAIN, 62)
+stream.stream.set(cv.CAP_PROP_SHARPNESS, 100)
+stream.stream.set(cv.CAP_PROP_CONTRAST, 50)
 
 if NAME_ARGS is not None:
     MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt',
