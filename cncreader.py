@@ -76,12 +76,13 @@ CSV_KEYS = [
     None
 ]
 
-stream = webcamStream(2, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
+stream = webcamStream(1, WIDTH_ARGS, HEIGHT_ARGS, FPS_ARGS).start()
 # stream.stream.set(cv.CAP_PROP_SETTINGS, 1)
-stream.stream.set(cv.CAP_PROP_EXPOSURE, -5.0)
-stream.stream.set(cv.CAP_PROP_GAIN, 62)
-stream.stream.set(cv.CAP_PROP_SHARPNESS, 100)
-stream.stream.set(cv.CAP_PROP_CONTRAST, 50)
+stream.stream.set(cv.CAP_PROP_CONTRAST, 128)
+stream.stream.set(cv.CAP_PROP_SHARPNESS, 255)
+stream.stream.set(cv.CAP_PROP_EXPOSURE, -5)
+stream.stream.set(cv.CAP_PROP_ZOOM, 100)
+stream.stream.set(cv.CAP_PROP_FOCUS, 70)
 
 if NAME_ARGS is not None:
     MATRIX = np.loadtxt('calibrations/' + NAME_ARGS + '_matrix.txt',
