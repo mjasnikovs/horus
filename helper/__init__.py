@@ -2,9 +2,13 @@ import cv2 as cv
 import numpy as np
 
 from threading import Timer, Thread
-from scipy.stats import itemfreq
 from imutils import contours, perspective
 from scipy.spatial import distance
+
+
+def itemfreq(a):
+    items, freq = np.unique(a, return_counts=True)
+    return np.array([items, freq]).T
 
 
 class RGB_INIT():
@@ -79,8 +83,8 @@ class functionThread():
 
 
 class webcamStream():
-    def __init__(self, src=0, width=4096, height=2160, fps=30):
-        self.stream = cv.VideoCapture(cv.CAP_DSHOW + src)
+    def __init__(self, src=cv.CAP_DSHOW, width=4096, height=2160, fps=30):
+        self.stream = cv.VideoCapture(src)
 
         FRAM_CODEC = cv.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
