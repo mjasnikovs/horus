@@ -2,4 +2,4 @@
 .vscode
 temp
 CSV
-temp/*/*
+temp/*
